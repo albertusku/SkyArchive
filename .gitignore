@@ -15,6 +15,7 @@ training_weather_daily_*.csv
 BK/
 Logs_History/
 Logs_history/
+src/Models/
 
 # Logs and local notes
 src/Logs/*.log
