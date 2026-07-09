@@ -1,0 +1,9 @@
+[Unit]
+Description=Run meteo stats every hour and half hour
+
+[Timer]
+OnCalendar=*:0/30
+Unit=meteo_stats.service
+
+[Install]
+WantedBy=timers.target

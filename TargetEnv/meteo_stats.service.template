@@ -1,0 +1,10 @@
+[Unit]
+Description=Run meteo stats collection
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{SERVICE_USER}}
+WorkingDirectory={{APP_DIR}}
+ExecStart={{VENV_DIR}}/bin/python src/main.py

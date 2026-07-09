@@ -1,0 +1,11 @@
+[Unit]
+Description=Water Reserve API Service
+After=network.target
+
+[Service]
+User={{SERVICE_USER}}
+ExecStart={{VENV_DIR}}/bin/python {{APP_DIR}}/src/API/water_reserve_api.py %I
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

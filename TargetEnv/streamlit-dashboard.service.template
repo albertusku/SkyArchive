@@ -1,0 +1,12 @@
+[Unit]
+Description=Streamlit Dashboard Service
+After=network.target
+
+[Service]
+User={{SERVICE_USER}}
+WorkingDirectory={{APP_DIR}}
+ExecStart={{VENV_DIR}}/bin/python -m streamlit run {{APP_DIR}}/src/Visualizer/Today_page.py --server.port {{DASHBOARD_PORT}} --server.address {{DASHBOARD_ADDRESS}}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
