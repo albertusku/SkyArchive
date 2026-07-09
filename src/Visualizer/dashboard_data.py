@@ -3,8 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import legacy_data_path, resolve_data_path
-
 
 MONTH_MAPPING = {
     "January": 1,
@@ -44,20 +42,19 @@ ALWAYS_VISIBLE_DASHBOARD_PAGES = ("home", "logs", "todo")
 
 def dashboard_page_availability(csv_paths, exists_func=None):
     exists = exists_func or (lambda path: Path(path).exists())
-    path_available = lambda path: exists(path) or exists(legacy_data_path(path))
     electricity_available = exists(csv_paths["electricity_consumption"]) or exists(
         csv_paths["electricity_production"]
     )
 
     rules = [
         ("home", True),
-        ("forecast", path_available(csv_paths["forecast"])),
-        ("daily_stats", path_available(csv_paths["daily_stats"])),
-        ("monthly_stats", path_available(csv_paths["monthly_stats"])),
+        ("forecast", exists(csv_paths["forecast"])),
+        ("daily_stats", exists(csv_paths["daily_stats"])),
+        ("monthly_stats", exists(csv_paths["monthly_stats"])),
         ("electricity", electricity_available),
-        ("water_reservoir", path_available(csv_paths["water_reservoir"])),
-        ("satellites", path_available(csv_paths["satellites"])),
-        ("season_predictions", path_available(csv_paths["season_predictions"])),
+        ("water_reservoir", exists(csv_paths["water_reservoir"])),
+        ("satellites", exists(csv_paths["satellites"])),
+        ("season_predictions", exists(csv_paths["season_predictions"])),
         ("logs", True),
         ("todo", True),
     ]
@@ -65,7 +62,7 @@ def dashboard_page_availability(csv_paths, exists_func=None):
 
 
 def load_csv_file(path, dataset_name=None):
-    file_path = Path(resolve_data_path(path))
+    file_path = Path(path)
     name = dataset_name or file_path.name
     try:
         return pd.read_csv(file_path)

@@ -46,24 +46,6 @@ def test_failed_forecast_electricity_and_water_are_not_written(monkeypatch):
     assert writes == []
 
 
-def test_save_csv_migrates_legacy_statistics_file(tmp_path):
-    csv_path = tmp_path / "Statistics_day.csv"
-    legacy_csv_path = tmp_path / ("Sta" + "distics_day.csv")
-    legacy_csv_path.write_text("Year,Mes,Dia\n2026,July,8\n")
-
-    result = storage_builder.save_csv(
-        pd.DataFrame([{"Year": 2026, "Mes": "July", "Dia": 9}]),
-        csv_path,
-    )
-
-    assert csv_path.exists()
-    assert not legacy_csv_path.exists()
-    assert result.to_dict("records") == [
-        {"Year": 2026, "Mes": "July", "Dia": 8},
-        {"Year": 2026, "Mes": "July", "Dia": 9},
-    ]
-
-
 def test_read_json_builds_expected_params(monkeypatch, tmp_path):
     config_file = tmp_path / "data.json"
     config_file.write_text(

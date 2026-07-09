@@ -70,7 +70,7 @@ def make_statistics_day(df,day,month,year):
 
 def make_statistics_month(df,month,year):
     logger.info(f"Creating statistics month")
-    current_df=pd.read_csv(resolve_data_path(STATISTICS_MONTH_DIR))
+    current_df=pd.read_csv(STATISTICS_MONTH_DIR)
     current_filter_df=current_df[current_df["Mes"]!=month]
     keys=["temp_max","temp_min","temp_mean","precipitaciones_totales","wind_speed_max"]
     temp_max=df[(df['Mes']==month) & (df['Year']==year)]['temp_max'].max()
@@ -122,7 +122,7 @@ def make_model_prediction():
     logger.info("Making model prediction")
     try:
         model = joblib.load(SEASON_PREDICTION_MODEL_DIR)
-        df = pd.read_csv(resolve_data_path(STATISTICS_DAY_DIR))
+        df = pd.read_csv(STATISTICS_DAY_DIR)
 
         feature_columns = [
             "temp_max",

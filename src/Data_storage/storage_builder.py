@@ -68,7 +68,6 @@ def create_storage_dataframe(data):
 
 
 def save_csv(df,path):#CSV only one sheet allowed---->A collumn with the year is needed
-    path = migrate_legacy_data_path(path)
     logger.info(f"Saving data in {path}")
     try:
         df.to_csv(path, mode="a", index=False, header=not os.path.exists(path))
@@ -80,7 +79,6 @@ def save_csv(df,path):#CSV only one sheet allowed---->A collumn with the year is
 
 
 def ensure_csv_columns(path, columns):
-    path = migrate_legacy_data_path(path)
     if not os.path.exists(path) or os.path.getsize(path) == 0:
         return
 

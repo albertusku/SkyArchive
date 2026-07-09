@@ -68,25 +68,13 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 "${REMOTE_USER}@${REMOTE_HOST}" "test 
 
 if [ "$DIRECTION" == "toPC" ]; then
   for FILE in "${FILES[@]}"; do
-    REMOTE_FILE="$FILE"
-    LEGACY_FILE="${FILE/Statistics/Sta"distics"}"
-    if ! ssh -o BatchMode=yes -o ConnectTimeout=10 "${REMOTE_USER}@${REMOTE_HOST}" "test -f '${REMOTE_PATH}${REMOTE_FILE}'" \
-      && [ "$LEGACY_FILE" != "$FILE" ] \
-      && ssh -o BatchMode=yes -o ConnectTimeout=10 "${REMOTE_USER}@${REMOTE_HOST}" "test -f '${REMOTE_PATH}${LEGACY_FILE}'"; then
-      REMOTE_FILE="$LEGACY_FILE"
-    fi
-
     log "Sincronizando $FILE..."
-    rsync -avz --progress "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}${REMOTE_FILE}" "${LOCAL_PATH}${FILE}" | tee -a "$LOG_FILE"
+    rsync -avz --progress "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}${FILE}" "${LOCAL_PATH}${FILE}" | tee -a "$LOG_FILE"
     log "$FILE sincronizado correctamente."
   done
 else
   for FILE in "${FILES[@]}"; do
     LOCAL_FILE="${LOCAL_PATH}${FILE}"
-    LEGACY_FILE="${FILE/Statistics/Sta"distics"}"
-    if [ ! -f "$LOCAL_FILE" ] && [ "$LEGACY_FILE" != "$FILE" ] && [ -f "${LOCAL_PATH}${LEGACY_FILE}" ]; then
-      LOCAL_FILE="${LOCAL_PATH}${LEGACY_FILE}"
-    fi
 
     if [ ! -f "$LOCAL_FILE" ]; then
       log "ERROR: no existe ${LOCAL_PATH}${FILE}"

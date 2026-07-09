@@ -82,16 +82,6 @@ def test_load_csv_file_reads_existing_csv(tmp_path):
     assert data.to_dict("records") == [{"a": 1, "b": 2}]
 
 
-def test_load_csv_file_reads_legacy_statistics_csv(tmp_path):
-    csv_file = tmp_path / "Statistics_day.csv"
-    legacy_csv_file = tmp_path / ("Sta" + "distics_day.csv")
-    legacy_csv_file.write_text("Year,Mes,Dia\n2026,July,8\n")
-
-    data = load_csv_file(csv_file, "Statistics_day.csv")
-
-    assert data.to_dict("records") == [{"Year": 2026, "Mes": "July", "Dia": 8}]
-
-
 def test_dashboard_pages_hide_forecast_when_forecast_csv_is_missing(tmp_path):
     paths = {
         "forecast": tmp_path / "Historical_weather_forecast.csv",
@@ -110,24 +100,6 @@ def test_dashboard_pages_hide_forecast_when_forecast_csv_is_missing(tmp_path):
     assert "home" in pages
     assert "logs" in pages
     assert "todo" in pages
-
-
-def test_dashboard_pages_accept_legacy_statistics_csv(tmp_path):
-    paths = {
-        "forecast": tmp_path / "Historical_weather_forecast.csv",
-        "daily_stats": tmp_path / "Statistics_day.csv",
-        "monthly_stats": tmp_path / "Statistics_month.csv",
-        "electricity_consumption": tmp_path / "Electricity_consumption.csv",
-        "electricity_production": tmp_path / "Electricity_production.csv",
-        "water_reservoir": tmp_path / "Water_reserve.csv",
-        "satellites": tmp_path / "Satellite_status.csv",
-        "season_predictions": tmp_path / "Season_prediction.csv",
-    }
-    (tmp_path / ("Sta" + "distics_day.csv")).write_text("Year,Mes,Dia\n2026,July,8\n")
-
-    pages = dashboard_page_availability(paths)
-
-    assert "daily_stats" in pages
 
 
 def test_dashboard_pages_show_electricity_when_consumption_or_production_exists(tmp_path):

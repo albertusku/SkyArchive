@@ -44,34 +44,6 @@ SATELLITE_OUTPUT = os.path.join(SDR_DIR,"output_satellite.txt")
 NOAA_APT=os.path.join(SDR_DIR,"noaa-apt")
 
 
-def legacy_data_path(path):
-    file_path = os.fspath(path)
-    legacy_prefix = "Sta" + "distics"
-    return os.path.join(
-        os.path.dirname(file_path),
-        os.path.basename(file_path).replace("Statistics", legacy_prefix),
-    )
-
-
-def resolve_data_path(path):
-    file_path = os.fspath(path)
-    if os.path.exists(file_path):
-        return file_path
-
-    legacy_path = legacy_data_path(file_path)
-    if legacy_path != file_path and os.path.exists(legacy_path):
-        return legacy_path
-
-    return file_path
-
-
-def migrate_legacy_data_path(path):
-    file_path = os.fspath(path)
-    legacy_path = legacy_data_path(file_path)
-    if legacy_path != file_path and not os.path.exists(file_path) and os.path.exists(legacy_path):
-        os.replace(legacy_path, file_path)
-    return file_path
-
 #DATETIME
 now=datetime.now()
 year=now.year
