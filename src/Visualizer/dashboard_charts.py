@@ -48,10 +48,10 @@ def historical_precipitation_chart(data):
         x="Hora",
         y="precipitation (mm/h)",
         color=WEATHER_PERIOD_COLUMN if WEATHER_PERIOD_COLUMN in data.columns else "Dia",
-        title="Comparación de Precipitación (mm/h) entre Días/Años",
-        labels={"Hora": "Hora", "precipitation (mm/h)": "Precipitación (mm/h)", WEATHER_PERIOD_COLUMN: "Día"},
+        title="Comparación de intensidad de precipitación (mm/h) entre Días/Años",
+        labels={"Hora": "Hora", "precipitation (mm/h)": "Intensidad de precipitación (mm/h)", WEATHER_PERIOD_COLUMN: "Día"},
     )
-    fig.update_layout(xaxis_title="Hora", yaxis_title="Precipitación (mm/h)")
+    fig.update_layout(xaxis_title="Hora", yaxis_title="Intensidad de precipitación (mm/h)")
     return apply_common_layout(fig)
 
 
@@ -187,9 +187,9 @@ def daily_precipitation_total_chart(data):
         x=WEATHER_PERIOD_COLUMN,
         y="precipitation_total",
         title="Lluvia total por día seleccionado",
-        labels={"precipitation_total": "Precipitación (mm)", WEATHER_PERIOD_COLUMN: "Día"},
+        labels={"precipitation_total": "Precipitación estimada (mm)", WEATHER_PERIOD_COLUMN: "Día"},
     )
-    fig.update_layout(xaxis_title="Día", yaxis_title="Precipitación (mm)")
+    fig.update_layout(xaxis_title="Día", yaxis_title="Precipitación estimada (mm)")
     return apply_common_layout(fig)
 
 
@@ -253,7 +253,7 @@ def precipitation_statistics_chart(data, x_column, daily_name="Precipitación Di
     fig.update_layout(
         title="Precipitación Acumulada y Diaria",
         xaxis_title="Mes" if x_column == "Mes" else "Fecha",
-        yaxis_title="Precipitación (mm)",
+        yaxis_title="Precipitación estimada (mm)",
         barmode="overlay",
     )
     return apply_common_layout(fig, "Precipitación acumulada y diaria")
@@ -353,9 +353,9 @@ def forecast_rain_chart(data):
         y="rain_total",
         text="rain_total",
         title="Lluvia acumulada prevista",
-        labels={"rain_total": "Precipitación (mm)", "horizonte": "Horizonte"},
+        labels={"rain_total": "Precipitación estimada (mm)", "horizonte": "Horizonte"},
     )
-    fig.update_layout(xaxis_title="Horizonte", yaxis_title="Precipitación (mm)")
+    fig.update_layout(xaxis_title="Horizonte", yaxis_title="Precipitación estimada (mm)")
     return apply_common_layout(fig)
 
 

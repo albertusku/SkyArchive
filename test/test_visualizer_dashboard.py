@@ -197,9 +197,9 @@ def test_prepare_historical_weather_and_summaries_build_comparable_data():
 
     assert prepared.iloc[0]["Periodo"] == "2026-06-27"
     assert summary["records"] == 2
-    assert summary["rain_total"] == 2
+    assert summary["rain_total"] == 1.0
     assert daily.iloc[0]["temp_max"] == 23
-    assert daily.iloc[0]["precipitation_total"] == 2
+    assert daily.iloc[0]["precipitation_total"] == 1.0
 
 
 def test_latest_weather_reading_uses_latest_valid_date_and_hour():
@@ -263,10 +263,10 @@ def test_current_weather_summary_uses_latest_reading_and_current_day_rain_total(
     latest = latest_weather_reading(data)
     summary = current_weather_summary(data)
 
-    assert daily_rain_total_from_historical(data, latest) == 2
+    assert daily_rain_total_from_historical(data, latest) == 1.0
     assert summary["temperature"] == 25
     assert summary["humidity"] == 50
-    assert summary["rain_today"] == 2
+    assert summary["rain_today"] == 1.0
     assert summary["wind_speed"] == 6
     assert summary["pressure"] == 1012
 

@@ -109,11 +109,12 @@ def test_tomorrow_current_response_is_mapped_to_storage_columns(monkeypatch):
             ]
         }
     }
-    monkeypatch.setattr(
-        api_connection.APIConnection,
-        "request_data_from_api",
-        lambda *_, **__: api_payload,
-    )
+    def fake_request(_, url, **kwargs):
+        assert "timesteps=current" in url
+        assert "units=metric" in url
+        return api_payload
+
+    monkeypatch.setattr(api_connection.APIConnection, "request_data_from_api", fake_request)
 
     data = api_connection.TomorrowAPIConnection(FakeLogger()).get_current_data(
         {"api_key": "secret", "latitude": 42.0, "longitude": -4.5}

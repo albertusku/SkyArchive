@@ -72,10 +72,11 @@ class TomorrowAPIConnection(APIConnection):
 
     def get_current_data(self, params):
         self.logger.info(f"Getting data from {self.name}")
-        url = f"https://api.tomorrow.io/v4/timelines?location={params['latitude']},{params['longitude']}&fields=precipitationIntensity,temperature,humidity,windSpeed,visibility,cloudCover,pressureSurfaceLevel,windDirection,&timesteps=30m&units=metric&apikey={params['api_key']}"
+        url = f"https://api.tomorrow.io/v4/timelines?location={params['latitude']},{params['longitude']}&fields=precipitationIntensity,temperature,humidity,windSpeed,visibility,cloudCover,pressureSurfaceLevel,windDirection,&timesteps=current&units=metric&apikey={params['api_key']}"
         data=self.request_data_from_api(url,file_json=TOMORROW_API_DIR)
         intervals = data["data"]["timelines"][0]["intervals"]
-        # Extraer el primer intervalo (ejemplo de datos actuales)
+        # La lectura current da una intensidad instantánea (mm/h),
+        # no un acumulado observado de esa media hora.
         first_interval = intervals[0]
         precipitation = first_interval["values"].get("precipitationIntensity", "N/A")
         temperature = first_interval["values"].get("temperature", "N/A")
@@ -85,7 +86,7 @@ class TomorrowAPIConnection(APIConnection):
         pressure = first_interval["values"].get("pressureSurfaceLevel", "N/A")
         percent_clouds = first_interval["values"].get("cloudCover", "N/A")
         visibliity=first_interval["values"].get("visibility", "N/A")
-        # Devolver solo los valores de precipitationIntensity
+        # Conservar la intensidad original; las estadísticas estiman mm por intervalo.
         return {"temp (C)": temperature,"precipitation (mm/h)": precipitation,"wind_direction(º)":wind_direction,
                 "wind_speed(m/s)":wind_speed,"hum(%)":humidity,"pres(hPa)":pressure,"clouds(%)":percent_clouds,
                 "visibility(m)":visibliity}

@@ -3,6 +3,7 @@ from datetime import datetime
 from config import *
 from Logs.logger import setup_logger
 import joblib
+from Data_storage.precipitation import daily_precipitation
 from datetime import timedelta
 
 logger=setup_logger("Statistics",os.path.join(LOGS_DIR,"Procces.log"))
@@ -36,55 +37,63 @@ def make_statistics(df):
     logger.info(f"Creating statistics of {previous_day}/{previous_month}/{real_year}")
     df_data_day=make_statistics_day(df,previous_day,previous_month,real_year)
     if now.day==1: 
-        df_data_month=make_statistics_month(df_data_day,previous_month,real_year)
+        df_data_month=make_statistics_month(pd.read_csv(STATISTICS_DAY_DIR),previous_month,real_year)
     model_result = make_model_prediction() #make model prediction based on the last day statistics
 
+def calculate_statistics_day(df, day, month, year, latitude):
+    """Calculate one day without writing files or modifying the input."""
+    data = df[(df["Mes"] == month) & (df["Dia"] == day) & (df["Year"] == year)]
+    if "Hora" in data.columns:
+        data = data.sort_values("Hora", kind="stable")
+    month_number = meses.index(month) + 1
+    total, max_hour, _, _ = daily_precipitation(data, year, month_number, day)
+    return {
+        "Year": year, "Mes": month, "Dia": day,
+        "temp_max": data["temp (C)"].max(),
+        "temp_min": data["temp (C)"].min(),
+        "temp_mean": data["temp (C)"].mean(),
+        "precipitaciones_totales": total,
+        "precipitacion_max_1h": max_hour,
+        "wind_speed_max": data["wind_speed(m/s)"].max(),
+        "season": get_season(month, latitude) if latitude is not None else "Unknown",
+        "humidity": data["hum(%)"].mean(),
+        "pressure": data["pres(hPa)"].mean(),
+        "clouds": data["clouds(%)"].mean(),
+    }
+
+
+def calculate_statistics_month(df, month, year):
+    """Calculate a month from daily statistics without writing files."""
+    data = df[(df["Mes"] == month) & (df["Year"] == year)].copy()
+    if "Dia" in data.columns:
+        data = data.drop_duplicates(subset=["Year", "Mes", "Dia"], keep="last")
+    return {
+        "Year": year, "Mes": month,
+        "temp_max": data["temp_max"].max(),
+        "temp_min": data["temp_min"].min(),
+        "temp_mean": data["temp_mean"].mean(),
+        "precipitaciones_totales": pd.to_numeric(data["precipitaciones_totales"], errors="coerce").sum(min_count=1),
+        "wind_speed_max": data["wind_speed_max"].max(),
+    }
+
+
 def make_statistics_day(df,day,month,year):
-    logger.info(f"Creating statistics day")
-    keys=["temp_max","temp_min","temp_mean","precipitaciones_totales",
-          "precipitacion_max_1h","wind_speed_max","season","humidity","pressure",
-          "clouds"]
-    temp_max=df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['temp (C)'].max()
-    temp_min=df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['temp (C)'].min()
-    temp_mean=df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['temp (C)'].mean()
-    humidity = df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['hum(%)'].mean()
-    pressure = df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['pres(hPa)'].mean()
-    clouds = df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['clouds(%)'].mean()
-    precipitaciones_totales = df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['precipitation (mm/h)'].sum()
-    df['Precipitacion_1h'] = df['precipitation (mm/h)'].rolling(window=2).sum()
-    precipitacion_max_1h = df['Precipitacion_1h'].max()
-    wind_speed_max=df[(df['Mes'] == month) & (df['Dia'] == day) & (df['Year'] == year)]['wind_speed(m/s)'].max()
+    logger.info("Creating statistics day")
     try:
-        season=get_season(month,get_station_latitude())
+        latitude = get_station_latitude()
     except Exception as e:
         logger.error(f"Failed to calculate season: {e}")
-        season="Unknown"
-    values=[temp_max,temp_min,temp_mean,precipitaciones_totales,precipitacion_max_1h,
-            wind_speed_max,season,humidity,pressure,clouds]
-    data_day=dict(zip(keys,values))
-    new_data={"Year":year,"Mes":month,"Dia":day}
-    data_day={**new_data,**data_day}
-    df_data_day=pd.DataFrame([data_day])
+        latitude = None
+    data_day = calculate_statistics_day(df, day, month, year, latitude)
     from Data_storage.storage_builder import save_csv
-    return save_csv(df_data_day,STATISTICS_DAY_DIR)
+    return save_csv(pd.DataFrame([data_day]), STATISTICS_DAY_DIR)
+
 
 def make_statistics_month(df,month,year):
-    logger.info(f"Creating statistics month")
-    current_df=pd.read_csv(STATISTICS_MONTH_DIR)
-    current_filter_df=current_df[current_df["Mes"]!=month]
-    keys=["temp_max","temp_min","temp_mean","precipitaciones_totales","wind_speed_max"]
-    temp_max=df[(df['Mes']==month) & (df['Year']==year)]['temp_max'].max()
-    temp_min=df[(df['Mes']==month) & (df['Year']==year)]['temp_min'].min()
-    temp_mean=df[(df['Mes']==month) & (df['Year']==year)]['temp_mean'].mean()
-    precipitaciones_totales=df[(df['Mes']==month) & (df['Year']==year)]['precipitaciones_totales'].sum()
-    wind_speed_max=df[(df['Mes']==month) & (df['Year']==year)]['wind_speed_max'].max()
-    values=[temp_max,temp_min,temp_mean,precipitaciones_totales,wind_speed_max]
-    data_month=dict(zip(keys,values))
-    new_data={"Year":year,"Mes":month}
-    data_month={**new_data,**data_month}
-    df_data_month=pd.DataFrame([data_month])
+    logger.info("Creating statistics month")
+    data_month = calculate_statistics_month(df, month, year)
     from Data_storage.storage_builder import save_csv
-    return save_csv(df_data_month,STATISTICS_MONTH_DIR)
+    return save_csv(pd.DataFrame([data_month]), STATISTICS_MONTH_DIR)
 
 def make_statistics_electricity_day(dfs):
     logger.info(f"Creating statistics electricity day")

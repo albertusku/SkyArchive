@@ -21,6 +21,7 @@ def test_make_statistics_day_calculates_weather_summary(monkeypatch, tmp_path):
                 "Year": 2026,
                 "Mes": "June",
                 "Dia": 11,
+                "Hora": "00:00",
                 "temp (C)": 10,
                 "precipitation (mm/h)": 0.5,
                 "wind_speed(m/s)": 1,
@@ -32,6 +33,7 @@ def test_make_statistics_day_calculates_weather_summary(monkeypatch, tmp_path):
                 "Year": 2026,
                 "Mes": "June",
                 "Dia": 11,
+                "Hora": "00:30",
                 "temp (C)": 14,
                 "precipitation (mm/h)": 1.0,
                 "wind_speed(m/s)": 4,
@@ -43,6 +45,7 @@ def test_make_statistics_day_calculates_weather_summary(monkeypatch, tmp_path):
                 "Year": 2026,
                 "Mes": "June",
                 "Dia": 11,
+                "Hora": "01:00",
                 "temp (C)": 8,
                 "precipitation (mm/h)": 0.0,
                 "wind_speed(m/s)": 2,
@@ -60,8 +63,8 @@ def test_make_statistics_day_calculates_weather_summary(monkeypatch, tmp_path):
     assert row["temp_max"] == 14
     assert row["temp_min"] == 8
     assert row["temp_mean"] == 32 / 3
-    assert row["precipitaciones_totales"] == 1.5
-    assert row["precipitacion_max_1h"] == 1.5
+    assert row["precipitaciones_totales"] == 0.75
+    assert row["precipitacion_max_1h"] == 0.75
     assert row["wind_speed_max"] == 4
     assert row["humidity"] == 50
     assert row["pressure"] == 1012
@@ -72,6 +75,7 @@ def test_make_statistics_uses_previous_row_to_close_previous_day(monkeypatch):
     calls = []
     monkeypatch.setattr(statistics, "make_statistics_day", lambda df, day, month, year: calls.append((day, month, year)) or pd.DataFrame())
     monkeypatch.setattr(statistics, "make_statistics_month", lambda *args: None)
+    monkeypatch.setattr(statistics, "make_model_prediction", lambda: None)
     monkeypatch.setattr(statistics, "now", datetime(2026, 6, 12, 0, 0))
     df = pd.DataFrame(
         [
@@ -120,3 +124,18 @@ def test_make_statistics_electricity_day_writes_consumption_and_production(monke
     assert writes[0][0].iloc[0]["Dia"] == 11
     assert writes[0][0].iloc[0]["nuclear"] == 15
     assert writes[1][0].iloc[0]["nuclear"] == 30
+
+
+def test_monthly_precipitation_uses_one_daily_value_per_date():
+    data = pd.DataFrame([
+        {"Year": 2025, "Mes": "December", "Dia": 31, "temp_max": 10,
+         "temp_min": 1, "temp_mean": 5, "precipitaciones_totales": 100, "wind_speed_max": 2},
+        {"Year": 2026, "Mes": "January", "Dia": 1, "temp_max": 11,
+         "temp_min": 2, "temp_mean": 6, "precipitaciones_totales": 1, "wind_speed_max": 3},
+        {"Year": 2026, "Mes": "January", "Dia": 1, "temp_max": 11,
+         "temp_min": 2, "temp_mean": 6, "precipitaciones_totales": 2, "wind_speed_max": 3},
+        {"Year": 2026, "Mes": "January", "Dia": 2, "temp_max": 12,
+         "temp_min": 3, "temp_mean": 7, "precipitaciones_totales": 3, "wind_speed_max": 4},
+    ])
+    result = statistics.calculate_statistics_month(data, "January", 2026)
+    assert result["precipitaciones_totales"] == 5

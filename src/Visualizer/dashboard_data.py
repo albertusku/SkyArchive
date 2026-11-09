@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from Data_storage.precipitation import precipitation_series
+
 
 MONTH_MAPPING = {
     "January": 1,
@@ -193,7 +195,7 @@ def daily_rain_total_from_historical(data, latest_row):
         & (data["Mes"] == latest_row.get("Mes"))
         & (data["Dia"] == latest_row.get("Dia"))
     ]
-    rain_values = pd.to_numeric(day_data["precipitation (mm/h)"], errors="coerce").dropna()
+    rain_values = precipitation_series(day_data).dropna()
     return rain_values.sum() if not rain_values.empty else pd.NA
 
 
@@ -255,7 +257,7 @@ def weather_summary(data):
         "temp_mean": metric_value(data, "temp (C)", "mean"),
         "temp_min": metric_value(data, "temp (C)", "min"),
         "temp_max": metric_value(data, "temp (C)", "max"),
-        "rain_total": metric_value(data, "precipitation (mm/h)", "sum"),
+        "rain_total": precipitation_series(data).sum(min_count=1),
         "wind_max": metric_value(data, "wind_speed(m/s)", "max"),
         "humidity_mean": metric_value(data, "hum(%)", "mean"),
         "pressure_mean": metric_value(data, "pres(hPa)", "mean"),
@@ -288,7 +290,6 @@ def daily_weather_breakdown(data):
 
     aggregations = {
         "temp (C)": ["min", "mean", "max"],
-        "precipitation (mm/h)": "sum",
         "wind_speed(m/s)": "max",
         "hum(%)": "mean",
         "pres(hPa)": "mean",
@@ -302,7 +303,10 @@ def daily_weather_breakdown(data):
     if not available_aggregations:
         return pd.DataFrame()
 
-    grouped = data.groupby(WEATHER_PERIOD_COLUMN, dropna=False).agg(available_aggregations)
+    prepared = data.copy()
+    prepared["precipitation_total"] = precipitation_series(prepared)
+    available_aggregations["precipitation_total"] = lambda values: values.sum(min_count=1)
+    grouped = prepared.groupby(WEATHER_PERIOD_COLUMN, dropna=False).agg(available_aggregations)
     grouped.columns = [
         "_".join(column).strip("_") if isinstance(column, tuple) else column
         for column in grouped.columns
@@ -312,11 +316,11 @@ def daily_weather_breakdown(data):
             "temp (C)_min": "temp_min",
             "temp (C)_mean": "temp_mean",
             "temp (C)_max": "temp_max",
-            "precipitation (mm/h)_sum": "precipitation_total",
             "wind_speed(m/s)_max": "wind_speed_max",
             "hum(%)_mean": "humidity_mean",
             "pres(hPa)_mean": "pressure_mean",
             "clouds(%)_mean": "clouds_mean",
+            "precipitation_total_<lambda>": "precipitation_total",
         }
     )
     return grouped
@@ -411,7 +415,7 @@ def add_accumulated_precipitation(data):
     prepared_data = data.copy()
     prepared_data["precipitacion_acumulada"] = pd.to_numeric(
         prepared_data["precipitaciones_totales"], errors="coerce"
-    ).fillna(0).cumsum()
+    ).cumsum()
     return prepared_data
 
 
